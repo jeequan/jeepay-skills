@@ -102,11 +102,6 @@ cp -r jeepay-skills/skills/jeepay-open-integration ~/.claude/skills/
 
 V1.1 会处理这些。
 
-## 致谢
-
-- Jeepay 团队（[@jeequan](https://github.com/jeequan)）— 提供开源支付网关
-- 内容质量审核：Claude（Anthropic）+ Codex（OpenAI）联合双盲交叉审核
-
 ## License
 
 [MIT](LICENSE) — 自由使用、修改、再分发。
