@@ -9,7 +9,7 @@ Jeepay 开源版支付集成校验清单。
 | 校验项 | 校验要求 | 说明 |
 |--------|----------|------|
 | 签名方式 | 使用 MD5 | 固定使用 MD5 签名 |
-| 参数排序 | 按 key 做大小写不敏感排序 | 与 SDK `String.CASE_INSENSITIVE_ORDER` 一致 |
+| 参数排序 | 对完整 `key=value&` 片段做大小写不敏感排序 | 与 SDK `String.CASE_INSENSITIVE_ORDER` 一致 |
 | 签名验证 | 异步通知必须先验签 | 确保通知来源可信 |
 
 ### 签名算法检查

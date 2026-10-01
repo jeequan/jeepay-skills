@@ -1,0 +1,81 @@
+{
+  "api_key": "offline-test-key",
+  "time_seconds": 1700000000.123,
+  "vectors": [
+    {
+      "name": "normal",
+      "params": {
+        "mchNo": "M1621873433953",
+        "appId": "60cc09bce4b0f1c0b83761c9",
+        "amount": 100
+      },
+      "canonical": "amount=100&appId=60cc09bce4b0f1c0b83761c9&mchNo=M1621873433953&reqTime=1700000000123&signType=MD5&version=1.0&key=offline-test-key",
+      "sign": "CE76B1B36C5B683AD2F8FB0FCA95055B"
+    },
+    {
+      "name": "zero",
+      "params": {
+        "amount": 0,
+        "state": 0
+      },
+      "canonical": "amount=0&reqTime=1700000000123&signType=MD5&state=0&version=1.0&key=offline-test-key",
+      "sign": "6F5CE7D1150794CB08A853964CDF3723"
+    },
+    {
+      "name": "null_empty",
+      "params": {
+        "amount": 1,
+        "absent": null,
+        "empty": ""
+      },
+      "canonical": "amount=1&reqTime=1700000000123&signType=MD5&version=1.0&key=offline-test-key",
+      "sign": "7DC985B98166C7A092595BA23A981F50"
+    },
+    {
+      "name": "mixed_case",
+      "params": {
+        "Zebra": "last",
+        "apple": "first"
+      },
+      "canonical": "apple=first&reqTime=1700000000123&signType=MD5&version=1.0&Zebra=last&key=offline-test-key",
+      "sign": "9C90DE387B013B218B091D5BA0BB76B2"
+    },
+    {
+      "name": "case_tie_prefix",
+      "params": {
+        "a": "z",
+        "A": "a",
+        "a0": "prefix"
+      },
+      "canonical": "a0=prefix&A=a&a=z&reqTime=1700000000123&signType=MD5&version=1.0&key=offline-test-key",
+      "sign": "BA9AF3B13F07EC35495DCC96D8171C56"
+    },
+    {
+      "name": "false_whitespace",
+      "params": {
+        "enabled": false,
+        "memo": " "
+      },
+      "canonical": "enabled=false&memo= &reqTime=1700000000123&signType=MD5&version=1.0&key=offline-test-key",
+      "sign": "15674BFD4022123071E0B1CD1A2A20BF"
+    },
+    {
+      "name": "utf8_value",
+      "params": {
+        "subject": "测试商品",
+        "amount": 1
+      },
+      "canonical": "amount=1&reqTime=1700000000123&signType=MD5&subject=测试商品&version=1.0&key=offline-test-key",
+      "sign": "F9F6BC7ED815F9B4D129B4C16D28E2C7"
+    },
+    {
+      "name": "old_sign",
+      "params": {
+        "amount": 1,
+        "sign": "OLD_SIGNATURE"
+      },
+      "canonical": "amount=1&reqTime=1700000000123&signType=MD5&version=1.0&key=offline-test-key",
+      "sign": "7DC985B98166C7A092595BA23A981F50"
+    }
+  ]
+}
