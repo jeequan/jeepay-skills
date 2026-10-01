@@ -83,7 +83,7 @@ cp -r jeepay-skills/skills/jeepay-open-integration ~/.claude/skills/
 
 - 🐛 发现 skill 生成的代码有问题 → 开 [Issue](../../issues)，附 AI 工具名 + 你的 prompt + 生成结果
 - 💡 想要新的 Jeepay 相关 skill → 开 [Issue](../../issues) 描述场景，社区评估
-- 🛠 想修改 skill 内容 → PR 欢迎，请同步更新 `bundle.md`
+- 🛠 想修改 skill 内容 → 请阅读 [贡献指南](CONTRIBUTING.md)，社区 PR 提交到 `master`，并同步更新 `bundle.md`
 
 ## 版本与兼容性
 
@@ -91,7 +91,7 @@ cp -r jeepay-skills/skills/jeepay-open-integration ~/.claude/skills/
 |-----------|-----------------|------|
 | `jeepay-open-integration` v1.0 | Jeepay V3.2.x+ | 首发版本 |
 
-详见 [CHANGELOG.md](CHANGELOG.md)（待添加）。
+稳定版本与变更说明见 [GitHub Releases](https://github.com/jeequan/jeepay-skills/releases)；`master` 包含未发布修改。贡献、回归、兼容性与升级要求见 [贡献指南](CONTRIBUTING.md)。
 
 ## 已知限制（V1.0）
 
