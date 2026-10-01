@@ -10,9 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Run offline documented-example regressions
         run: python3 -m unittest discover -s tests -v
       - name: Check generated bundle
         run: python3 scripts/build_bundle.py --check
       - name: Check whitespace
-        run: git diff --check
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ -n "$PR_BASE_SHA" ]; then
+            git diff --check "$PR_BASE_SHA...$PR_HEAD_SHA"
+          else
+            git show --format= --check HEAD
+          fi
