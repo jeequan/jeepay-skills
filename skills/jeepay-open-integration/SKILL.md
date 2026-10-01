@@ -293,7 +293,7 @@ description: >-
 
 1. 检查 apiKey 是否与 Jeepay 运营平台配置一致
 2. 检查签名参数是否包含 sign 字段（签名前需移除 sign）
-3. 检查参数排序是否按 ASCII 升序（key1=value1&key2=value2&...）
+3. 检查是否对完整 `key=value&` 片段做大小写不敏感排序后拼接
 4. 检查签名拼接末尾是否附加了 `key=apiKey`
 5. 检查 MD5 结果是否转为大写
 6. 检查空值参数是否已过滤（空值不参与签名）

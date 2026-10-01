@@ -306,7 +306,7 @@ description: >-
 
 1. 检查 apiKey 是否与 Jeepay 运营平台配置一致
 2. 检查签名参数是否包含 sign 字段（签名前需移除 sign）
-3. 检查参数排序是否按 ASCII 升序（key1=value1&key2=value2&...）
+3. 检查是否对完整 `key=value&` 片段做大小写不敏感排序后拼接
 4. 检查签名拼接末尾是否附加了 `key=apiKey`
 5. 检查 MD5 结果是否转为大写
 6. 检查空值参数是否已过滤（空值不参与签名）
@@ -1010,18 +1010,19 @@ Jeepay 固定使用 MD5 签名，SDK 工具类：`com.jeequan.jeepay.util.Jeepay
 
 ### 签名流程（SDK 内部）
 
-1. 过滤空值：移除 `value` 为 null 或空字符串 `""` 的参数
-2. 按参数名做**大小写不敏感排序**（`String.CASE_INSENSITIVE_ORDER`）
-3. 拼接为 `key1=value1&key2=value2&...`
-4. 末尾追加 `key=apiKey`
+1. 调用方先移除旧的 `sign`；过滤 `value` 为 null 或空字符串 `""` 的参数，保留数值 `0`
+2. 将每项拼接为 `key=value&`，用 `String.CASE_INSENSITIVE_ORDER` 对这些完整片段排序（通常表现为参数名大小写不敏感排序）
+3. 顺序连接所有片段；大小写同名或前缀参数也按完整片段比较
+4. 末尾追加 `key=apiKey`（无额外分隔符）
 5. 对拼接字符串做 MD5，结果转**大写**
 
 ### 签名示例
 
 ```
 参数：{mchNo=M1621873433953, appId=60cc09bce4b0f1c0b83761c9, amount=100}
-排序拼接：amount=100&appId=60cc09bce4b0f1c0b83761c9&mchNo=M1621873433953&key=你的apiKey
-MD5结果：E10ADC3949BA59ABBE56E057F20F883E（大写）
+测试密钥：test-api-key（仅用于离线示例）
+排序拼接：amount=100&appId=60cc09bce4b0f1c0b83761c9&mchNo=M1621873433953&key=test-api-key
+MD5结果：9717AAF3E5A9D564ED93559644E8D620（大写）
 ```
 
 ### 验签机制
@@ -1091,7 +1092,7 @@ model.setChannelExtra(extra.toString());
 │
 └── ✅ 正确排查顺序：
     1. 检查签名参数是否包含 sign 字段（签名前需移除 sign）
-    2. 检查参数排序是否按 ASCII 升序（key1=value1&key2=value2&...）
+    2. 检查是否对完整 `key=value&` 片段做大小写不敏感排序后拼接
     3. 检查签名拼接末尾是否附加了 key=apiKey
     4. 检查空值参数是否已过滤（空值不参与签名）
     5. 检查 MD5 结果是否转为大写
@@ -1163,22 +1164,28 @@ def pay_for_merchant(merchant_config, order_params):
 
 **思路二：直接 HTTP 调用 + 手动签名**（适用于高并发多商户场景）
 
-绕过 SDK 的全局配置，直接构造 HTTP 请求并手动签名：
+绕过 SDK 的全局配置，直接构造 HTTP 请求并手动签名。以下示例针对 Jeepay 的 ASCII 参数名及字符串、整数、布尔值；如参数名仅大小写不同，相关值也须为 ASCII（Python `str.lower` 对 Unicode 的比较不完全等同于 Java 比较器）。`channelExtra` 等结构化参数先序列化为接口要求的 JSON 字符串，不要直接传 Python dict/list。签名规则以 [后端 JeepayKit.getSign](https://github.com/jeequan/jeepay/blob/d38becc1bbde1c5077c27facaf473606fc50129a/jeepay-core/src/main/java/com/jeequan/jeepay/core/utils/JeepayKit.java) 和 [Java SDK JeepayKit](https://github.com/jeequan/jeepay-sdk-java/blob/75d1f1a0090e53fa33fefc2ff27e47ab35bb9425/src/main/java/com/jeequan/jeepay/util/JeepayKit.java) 为准：
 
 ```python
 import hashlib
+import time
 import requests
 
 def call_jeepay_api(api_key, api_base, api_path, biz_params):
+    # 复制参数并移除旧签名，避免复用/重试时把 sign 也签进去
+    biz_params = {k: v for k, v in biz_params.items() if k != "sign"}
     # 注入公共参数
     biz_params["version"] = "1.0"
     biz_params["signType"] = "MD5"
     biz_params["reqTime"] = str(int(time.time() * 1000))
 
-    # 手动签名
-    sign_str = "&".join(f"{k}={v}" for k, v in sorted(biz_params.items(), key=lambda x: x[0].lower()) if v)
-    sign_str += f"&key={api_key}"
-    biz_params["sign"] = hashlib.md5(sign_str.encode()).hexdigest().upper()
+    # 与 Java 实现一致：仅跳过 None/空字符串，保留 0/False，排序完整片段
+    parts = [
+        f"{k}={str(v).lower() if isinstance(v, bool) else v}&"
+        for k, v in biz_params.items() if v is not None and v != ""
+    ]
+    sign_str = "".join(sorted(parts, key=str.lower)) + f"key={api_key}"
+    biz_params["sign"] = hashlib.md5(sign_str.encode("utf-8")).hexdigest().upper()
 
     # 发送请求
     resp = requests.post(f"{api_base}/{api_path}", json=biz_params)
@@ -1204,7 +1211,7 @@ Jeepay 开源版支付集成校验清单。
 | 校验项 | 校验要求 | 说明 |
 |--------|----------|------|
 | 签名方式 | 使用 MD5 | 固定使用 MD5 签名 |
-| 参数排序 | 按 key 做大小写不敏感排序 | 与 SDK `String.CASE_INSENSITIVE_ORDER` 一致 |
+| 参数排序 | 对完整 `key=value&` 片段做大小写不敏感排序 | 与 SDK `String.CASE_INSENSITIVE_ORDER` 一致 |
 | 签名验证 | 异步通知必须先验签 | 确保通知来源可信 |
 
 ### 签名算法检查
@@ -1677,8 +1684,8 @@ public class PayOrderCreateExample {
 
 Jeepay 使用 MD5 签名，流程：
 
-1. 将通知参数中 `sign` 字段移除
-2. 剩余参数按 key 的 ASCII 码升序排列
+1. 将通知参数中 `sign` 字段移除，并过滤 null / 空字符串（保留数值 `0`）
+2. 将剩余参数组成 `key=value&` 片段，按完整片段做大小写不敏感排序（与 Java `String.CASE_INSENSITIVE_ORDER` 一致）
 3. 拼接为 `key1=value1&key2=value2&...&key=apiKey`
 4. 对拼接字符串做 MD5，结果转大写
 
@@ -1792,8 +1799,8 @@ public class NotifyExample {
 
 ```java
 // JeepayKit.getSign() 内部实现：
-// 1. 过滤空值，拼接为 key1=value1&key2=value2&
-// 2. 按 ASCII 升序排列
+// 1. 仅过滤 null/空字符串，保留 0，拼接为 key=value& 片段
+// 2. 对完整 key=value& 片段做大小写不敏感排序
 // 3. 末尾追加 key=apiKey
 // 4. MD5 后转大写
 

@@ -105,3 +105,15 @@ V1.1 会处理这些。
 ## License
 
 [MIT](LICENSE) — 自由使用、修改、再分发。
+
+## 文档示例回归检查
+
+修改来源文档后，重新生成并检查单文件版（保持原有内容选择，不额外打包 Python 示例或静态文档）：
+
+```bash
+python3 scripts/build_bundle.py
+python3 scripts/build_bundle.py --check
+python3 -m unittest discover -s tests -v
+```
+
+测试仅需 Python 标准库，会从实际 Markdown 代码块执行 HTTP 示例，并用替身拦截 `requests.post`，不会访问支付网关。详情和 Java 实现交叉验证见 [tests/README.md](tests/README.md)。
